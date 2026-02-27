@@ -267,7 +267,9 @@ header h1 {
 /* ---- Definition Panel ---- */
 #definition-panel {
   width: min(500px, 100vw);
-  padding: 6px 16px 4px;
+  /* inset from edges so the frosted pill has breathing room */
+  margin: 2px 12px 0;
+  padding: 8px 16px 6px;
   flex-shrink: 0;
   display: flex;
   flex-direction: row;
@@ -276,7 +278,19 @@ header h1 {
   gap: 0 6px;
   animation: defFadeIn 0.4s ease;
   position: relative;
-  z-index: 1;              /* above bg-scene */
+  z-index: 1;
+  border-radius: 10px;
+  /* ── frosted-glass backdrop keeps text legible on any background ── */
+  background: rgba(15, 15, 16, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Light-mode pill is a bright frosted white */
+body.light #definition-panel {
+  background: rgba(255, 255, 255, 0.84);
+  border-color: rgba(0, 0, 0, 0.09);
 }
 
 #definition-panel[hidden] { display: none; }
@@ -286,32 +300,43 @@ header h1 {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Answer word — bright so it pops on the dark pill */
 #def-word {
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--correct);
+  color: #7ed6a0;         /* bright mint-green — readable on dark backdrop */
   flex-shrink: 0;
 }
+body.light #def-word {
+  color: #1b6e3a;         /* deep green — readable on white backdrop */
+}
 
+/* Part-of-speech label */
 #def-pos {
   font-size: 0.72rem;
   font-style: italic;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.62);
   flex-shrink: 0;
 }
+body.light #def-pos {
+  color: #555;
+}
 
+/* Definition text */
 #def-text {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.88);
   line-height: 1.4;
   width: 100%;
-  /* clamp to two lines on small phones */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+body.light #def-text {
+  color: #222;
 }
 
 /* ---- Keyboard ---- */
