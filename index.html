@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Wordlle – guess the word in 6 tries. Play unlimited games!" />
+  <title>Wordlle</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%23538d4e'/><text y='24' x='4' font-size='24' fill='white' font-family='Arial' font-weight='bold'>W</text></svg>" />
+</head>
+<body>
+
+  <!-- ====== HEADER ====== -->
+  <header>
+    <button class="icon-btn" id="help-btn" title="How to play"
+      aria-label="How to play">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 22C6.48 22 2 17.52 2 12S6.48 2 12 2s10 4.48 10 10-4.48 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-1-5h2v2h-2v-2zm0-8h2v6h-2V7z"/>
+      </svg>
+    </button>
+
+    <h1>Wordlle</h1>
+
+    <div class="header-icons">
+      <button class="icon-btn" id="stats-btn" title="Statistics"
+        aria-label="Statistics">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 3v18h18v-2H5V3H3zm4 12h2v4H7v-4zm4-4h2v8h-2v-8zm4-4h2v12h-2V7z"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="theme-btn" title="Toggle theme"
+        aria-label="Toggle theme">
+        <!-- Filled dynamically by JS -->
+        <svg viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ====== TOAST CONTAINER ====== -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- ====== GAME BOARD ====== -->
+  <div id="board-container">
+    <div id="board"></div>
+  </div>
+
+  <!-- ====== DEFINITION PANEL ====== -->
+  <div id="definition-panel" hidden>
+    <span id="def-word"></span>
+    <span id="def-pos"></span>
+    <p id="def-text"></p>
+  </div>
+
+  <!-- ====== KEYBOARD ====== -->
+  <div id="keyboard"></div>
+
+
+  <!-- ====== MODAL: HOW TO PLAY ====== -->
+  <div class="modal-overlay" id="help-modal" role="dialog" aria-modal="true"
+    aria-labelledby="help-title">
+    <div class="modal">
+      <button class="modal-close" aria-label="Close">&times;</button>
+      <h2 id="help-title">How to Play</h2>
+      <div class="instructions">
+        <p>Guess the <strong>WORDLLE</strong> in 6 tries.</p>
+        <p>Each guess must be a valid 5-letter word. Hit the <strong>Enter</strong> button or key to submit.</p>
+        <p>After each guess, the colour of the tiles will change to show how close your guess was to the word.</p>
+
+        <hr style="border-color: var(--border); margin: 14px 0;" />
+
+        <p><strong>Examples</strong></p>
+
+        <!-- Example 1: correct -->
+        <div class="example-row">
+          <div class="tile" data-state="correct">W</div>
+          <div class="tile">E</div>
+          <div class="tile">A</div>
+          <div class="tile">R</div>
+          <div class="tile">Y</div>
+        </div>
+        <p class="caption"><strong>W</strong> is in the word and in the correct spot.</p>
+
+        <!-- Example 2: present -->
+        <div class="example-row">
+          <div class="tile">P</div>
+          <div class="tile" data-state="present">I</div>
+          <div class="tile">L</div>
+          <div class="tile">L</div>
+          <div class="tile">S</div>
+        </div>
+        <p class="caption"><strong>I</strong> is in the word but in the wrong spot.</p>
+
+        <!-- Example 3: absent -->
+        <div class="example-row">
+          <div class="tile">V</div>
+          <div class="tile">A</div>
+          <div class="tile">G</div>
+          <div class="tile" data-state="absent">U</div>
+          <div class="tile">E</div>
+        </div>
+        <p class="caption"><strong>U</strong> is not in the word in any spot.</p>
+
+        <hr style="border-color: var(--border); margin: 14px 0;" />
+        <p>Click <strong>New Game</strong> any time to get a fresh word.<br/>
+           Everyone playing shares the same rotating word list — challenge colleagues to beat your score!</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ====== MODAL: STATISTICS ====== -->
+  <div class="modal-overlay" id="stats-modal" role="dialog" aria-modal="true"
+    aria-labelledby="stats-title">
+    <div class="modal">
+      <button class="modal-close" aria-label="Close">&times;</button>
+      <h2 id="stats-title">Statistics</h2>
+
+      <div class="stats-grid">
+        <div class="stat-block">
+          <span class="num" id="stat-played">0</span>
+          <span class="lbl">Played</span>
+        </div>
+        <div class="stat-block">
+          <span class="num" id="stat-win-pct">0</span>
+          <span class="lbl">Win&nbsp;%</span>
+        </div>
+        <div class="stat-block">
+          <span class="num" id="stat-streak">0</span>
+          <span class="lbl">Current Streak</span>
+        </div>
+        <div class="stat-block">
+          <span class="num" id="stat-max">0</span>
+          <span class="lbl">Max Streak</span>
+        </div>
+      </div>
+
+      <div class="guess-distribution">
+        <h3>Guess Distribution</h3>
+        <div id="dist-bars"></div>
+      </div>
+
+      <div class="stats-footer">
+        <p class="next-word">Daily word resets in <span id="countdown">--:--:--</span></p>
+        <div class="stats-btns">
+          <button id="share-btn">Share</button>
+          <button id="new-game-btn">New Game</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ====== SCRIPTS ====== -->
+  <script src="js/words.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
