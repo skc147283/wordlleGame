@@ -460,26 +460,10 @@
       distContainer.appendChild(row);
     });
 
-    updateCountdown();
-
     // Share only available when game is over
     document.getElementById('share-btn').classList.toggle('visible', gameOver);
 
     modal.classList.add('open');
-  }
-
-  function updateCountdown () {
-    const el = document.getElementById('countdown');
-    if (!el) return;
-    const now = new Date();
-    const nextMidnight = new Date(Date.UTC(
-      now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1
-    ));
-    const diff = nextMidnight - now;
-    const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
-    const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
-    const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
-    el.textContent = `${h}:${m}:${s}`;
   }
 
   /* ---- Share ---- */
@@ -566,9 +550,58 @@
 
     // New Game button
     document.getElementById('new-game-btn').addEventListener('click', startNewGame);
+  }
 
-    // Countdown ticker
-    setInterval(updateCountdown, 1000);
+  /* ---- Background scene: stars & rain ---- */
+  function initBackground () {
+    // === STARS (night mode) ===
+    const starField = document.getElementById('star-field');
+    if (starField) {
+      // Colours: mostly white/yellow, plus rare pink/blue/mint accent stars
+      const palette = [
+        '#ffffff','#ffffff','#ffffff','#fffde7','#fffde7',
+        '#fff9c4','#e3f2fd','#fce4ec','#e0f7fa','#f3e5f5'
+      ];
+      const layers = [
+        { count: 55, minPx: 1,   maxPx: 2   }, // tiny background stars
+        { count: 22, minPx: 2,   maxPx: 3   }, // medium stars
+        { count:  6, minPx: 3.2, maxPx: 5   }, // large glowing stars
+      ];
+      layers.forEach(({ count, minPx, maxPx }) => {
+        for (let i = 0; i < count; i++) {
+          const size  = minPx + Math.random() * (maxPx - minPx);
+          const color = palette[Math.floor(Math.random() * palette.length)];
+          const glow  = size > 2.8 ? `0 0 ${Math.round(size*2.5)}px ${Math.round(size)}px ${color}` : 'none';
+          const el    = document.createElement('div');
+          el.className = 'star';
+          el.style.cssText =
+            `width:${size.toFixed(1)}px;height:${size.toFixed(1)}px;` +
+            `top:${(Math.random() * 84).toFixed(1)}%;` +
+            `left:${(Math.random() * 100).toFixed(1)}%;` +
+            `background:${color};box-shadow:${glow};` +
+            `--dur:${(2 + Math.random() * 4).toFixed(1)}s;` +
+            `--delay:${-(Math.random() * 8).toFixed(1)}s;`;
+          starField.appendChild(el);
+        }
+      });
+    }
+
+    // === RAIN (day mode) ===
+    const rainWrap = document.getElementById('rain-wrap');
+    if (rainWrap) {
+      for (let i = 0; i < 48; i++) {
+        const h   = 14 + Math.random() * 32;
+        const el  = document.createElement('div');
+        el.className = 'rain-drop';
+        el.style.cssText =
+          `left:${(Math.random() * 100).toFixed(1)}%;` +
+          `height:${h.toFixed(0)}px;` +
+          `animation-duration:${(0.55 + Math.random() * 0.75).toFixed(2)}s;` +
+          `animation-delay:${-(Math.random() * 3).toFixed(2)}s;` +
+          `opacity:${(0.35 + Math.random() * 0.45).toFixed(2)};`;
+        rainWrap.appendChild(el);
+      }
+    }
   }
 
   /* ---- Init ---- */
@@ -579,6 +612,7 @@
     buildBoard();
     buildKeyboard();
     initTheme();
+    initBackground();
     wireEvents();
 
     const restored = restoreState();

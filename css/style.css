@@ -1,5 +1,5 @@
 /* =========================================
-   Wordle — CSS
+   Wordlle — CSS  (mobile-first responsive)
    ========================================= */
 
 :root {
@@ -53,17 +53,26 @@ body.light {
 
 /* ---- Reset ---- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { height: 100%; }
+
+html {
+  /* Prevent double-tap zoom on iOS */
+  touch-action: manipulation;
+  height: 100%;
+}
 
 body {
-  background: var(--bg);
+  background: transparent;   /* bg-scene provides the background */
   color: var(--text);
   font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100%;
-  transition: background var(--transition), color var(--transition);
+  position: relative;        /* contains absolutely-positioned bg-scene */
+  height: 100vh;
+  height: 100svh;
+  height: 100dvh;
+  overflow: hidden;
+  transition: color var(--transition);
   user-select: none;
 }
 
@@ -71,41 +80,50 @@ body {
 header {
   width: 100%;
   max-width: 500px;
+  flex-shrink: 0;          /* never shrink on small screens */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border);
   position: relative;
+  z-index: 1;              /* above bg-scene */
 }
 
 header h1 {
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  /* prevent title from overlapping icons */
+  pointer-events: none;
 }
 
 .header-icons {
   display: flex;
-  gap: 10px;
+  gap: 4px;
   margin-left: auto;
 }
 
+/* 44 × 44 px touch targets (Apple HIG / WCAG 2.5.5) */
 .icon-btn {
   background: none;
   border: none;
   cursor: pointer;
   color: var(--text);
-  padding: 4px;
-  border-radius: 4px;
+  /* 8px padding + 24px svg = 40px; with border-radius the tap area is fine */
+  padding: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: opacity var(--transition);
+  -webkit-tap-highlight-color: transparent;
+  min-width: 40px;
+  min-height: 40px;
 }
 .icon-btn:hover { opacity: 0.7; }
 .icon-btn svg { width: 24px; height: 24px; fill: currentColor; }
@@ -113,7 +131,7 @@ header h1 {
 /* ---- Toast Notifications ---- */
 #toast-container {
   position: fixed;
-  top: 70px;
+  top: 64px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
@@ -151,15 +169,24 @@ header h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px 0 10px;
+  padding: 8px 0 4px;
+  /* critical: allow container to shrink so keyboard stays visible */
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;              /* above bg-scene */
 }
 
 #board {
   display: grid;
   grid-template-rows: repeat(6, 1fr);
   gap: 5px;
-  width: min(350px, 90vw);
-  height: min(420px, 60vw);
+  /* Three-way clamp: never wider than 350px, never wider than 90vw,
+     and never so tall it overflows the page.
+     Header + def-panel + keyboard ≈ 300px; board height = width × 6/5
+     so max-width = (availableHeight) × 5/6  */
+  width: min(350px, 90vw, calc((100dvh - 300px) * 5 / 6));
+  aspect-ratio: 5 / 6;
 }
 
 .row {
@@ -173,13 +200,12 @@ header h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(1.4rem, 6vw, 2rem);
+  font-size: clamp(1.2rem, 5vw, 2rem);
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text);
   transition: border-color 0.05s;
   position: relative;
-  /* preserve-3d for flip */
   transform-style: preserve-3d;
 }
 
@@ -214,9 +240,7 @@ header h1 {
 .tile[data-state="absent"]  { background: var(--absent);  border-color: var(--absent);  color: #fff; }
 
 /* Row shake */
-.row.shake {
-  animation: shake 0.5s ease;
-}
+.row.shake { animation: shake 0.5s ease; }
 
 @keyframes shake {
   0%,100%  { transform: translateX(0); }
@@ -240,13 +264,68 @@ header h1 {
   100%    { transform: translateY(0); }
 }
 
+/* ---- Definition Panel ---- */
+#definition-panel {
+  width: min(500px, 100vw);
+  padding: 6px 16px 4px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 6px;
+  animation: defFadeIn 0.4s ease;
+  position: relative;
+  z-index: 1;              /* above bg-scene */
+}
+
+#definition-panel[hidden] { display: none; }
+
+@keyframes defFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#def-word {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--correct);
+  flex-shrink: 0;
+}
+
+#def-pos {
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+#def-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  width: 100%;
+  /* clamp to two lines on small phones */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* ---- Keyboard ---- */
 #keyboard {
   width: min(500px, 100vw);
-  padding: 0 8px 12px;
+  padding: 0 6px;
+  /* safe-area-inset-bottom handles iPhone home-bar notch */
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  position: relative;
+  z-index: 1;              /* above bg-scene */
 }
 
 .kb-row {
@@ -256,9 +335,9 @@ header h1 {
 }
 
 .key {
-  height: 58px;
-  min-width: 43px;
-  padding: 0 4px;
+  height: 56px;
+  min-width: 0;
+  padding: 0 2px;
   border-radius: 4px;
   border: none;
   background: var(--key-bg);
@@ -274,9 +353,11 @@ header h1 {
   align-items: center;
   justify-content: center;
   -webkit-tap-highlight-color: transparent;
+  /* ensure tap area is at least 44px tall even if height shrinks */
+  min-height: 44px;
 }
 
-.key.wide { min-width: 65px; max-width: 65px; font-size: 0.75rem; }
+.key.wide { min-width: 56px; max-width: 56px; font-size: 0.72rem; }
 
 .key[data-state="correct"] { background: var(--correct); color: #fff; }
 .key[data-state="present"] { background: var(--present); color: #fff; }
@@ -294,6 +375,9 @@ header h1 {
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(2px);
+  /* allow scrolling the overlay itself on very small screens */
+  overflow-y: auto;
+  padding: 16px;
 }
 .modal-overlay.open { display: flex; }
 
@@ -301,13 +385,17 @@ header h1 {
   background: var(--modal-bg);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 28px 28px 24px;
+  padding: 24px 20px 20px;
   max-width: 380px;
-  width: 90%;
+  width: 100%;
   position: relative;
   animation: modalIn 0.2s ease;
+  /* dvh accounts for iOS Safari toolbar; fallback to vh */
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
+  /* prevent modal from touching screen edges */
+  margin: auto;
 }
 
 @keyframes modalIn {
@@ -321,23 +409,30 @@ header h1 {
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
 }
 
+/* Close button — 44px touch target */
 .modal-close {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 10px;
+  right: 10px;
   background: none;
   border: none;
   cursor: pointer;
   color: var(--text-muted);
   font-size: 1.4rem;
   line-height: 1;
-  padding: 4px;
-  border-radius: 4px;
+  padding: 8px;
+  border-radius: 6px;
+  min-width: 40px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
 }
 .modal-close:hover { color: var(--text); }
 
@@ -345,43 +440,31 @@ header h1 {
 .instructions p {
   font-size: 0.85rem;
   color: var(--text-muted);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   line-height: 1.5;
 }
 
 .example-row {
   display: flex;
   gap: 4px;
-  margin: 10px 0 4px;
+  margin: 8px 0 4px;
 }
 
 .example-row .tile {
-  width: 42px;
-  height: 42px;
-  font-size: 1.1rem;
+  width: 40px;
+  height: 40px;
+  font-size: 1rem;
   border: 2px solid var(--tile-border-filled);
 }
 
-.example-row .tile[data-state="correct"] {
-  background: var(--correct);
-  border-color: var(--correct);
-  color: #fff;
-}
-.example-row .tile[data-state="present"] {
-  background: var(--present);
-  border-color: var(--present);
-  color: #fff;
-}
-.example-row .tile[data-state="absent"] {
-  background: var(--absent);
-  border-color: var(--absent);
-  color: #fff;
-}
+.example-row .tile[data-state="correct"] { background: var(--correct); border-color: var(--correct); color: #fff; }
+.example-row .tile[data-state="present"] { background: var(--present); border-color: var(--present); color: #fff; }
+.example-row .tile[data-state="absent"]  { background: var(--absent);  border-color: var(--absent);  color: #fff; }
 
 .caption {
   font-size: 0.8rem;
   color: var(--text-muted);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .caption strong { color: var(--text); }
 
@@ -391,7 +474,7 @@ header h1 {
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .stat-block {
@@ -401,13 +484,13 @@ header h1 {
 }
 
 .stat-block .num {
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 700;
   line-height: 1;
 }
 
 .stat-block .lbl {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: var(--text-muted);
   margin-top: 4px;
   text-align: center;
@@ -418,7 +501,7 @@ header h1 {
   font-size: 0.8rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   text-align: center;
 }
 
@@ -463,7 +546,7 @@ header h1 {
 
 /* Stats modal footer */
 .stats-footer {
-  margin-top: 20px;
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -472,28 +555,20 @@ header h1 {
   border-top: 1px solid var(--border);
 }
 
-.next-word {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-#countdown {
-  font-weight: 700;
-  color: var(--text);
-}
-
 /* Button row inside stats footer */
 .stats-btns {
   display: flex;
   gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 #share-btn {
   background: var(--correct);
   color: #fff;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 12px 28px;
   font-weight: 700;
   font-size: 1rem;
@@ -501,66 +576,342 @@ header h1 {
   letter-spacing: 0.08em;
   transition: filter 0.2s;
   display: none;
+  min-height: 48px;
+  flex: 1;
+  -webkit-tap-highlight-color: transparent;
 }
 #share-btn:hover { filter: brightness(1.1); }
-#share-btn.visible { display: block; }
+#share-btn.visible { display: flex; align-items: center; justify-content: center; }
 
 #new-game-btn {
   background: var(--key-bg);
   color: var(--key-text);
   border: 2px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 12px 28px;
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
   letter-spacing: 0.08em;
   transition: filter 0.2s, background 0.2s;
+  min-height: 48px;
+  flex: 1;
+  -webkit-tap-highlight-color: transparent;
 }
 #new-game-btn:hover { filter: brightness(1.1); }
 
-/* ---- Definition Panel ---- */
-#definition-panel {
-  width: min(500px, 100vw);
-  padding: 10px 20px 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  animation: defFadeIn 0.4s ease;
+/* ===================================================
+   Responsive breakpoints
+   =================================================== */
+
+/* ---- Narrow phones (≤ 380px wide: iPhone SE, older Androids) ---- */
+@media (max-width: 380px) {
+  header h1          { font-size: 1.35rem; }
+  .key               { height: 50px; font-size: 0.78rem; }
+  .key.wide          { min-width: 50px; max-width: 50px; font-size: 0.68rem; }
+  #keyboard          { gap: 5px; padding-left: 4px; padding-right: 4px; }
+  .kb-row            { gap: 4px; }
 }
 
-#definition-panel[hidden] { display: none; }
-
-@keyframes defFadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* ---- Short screens (≤ 700px tall: iPhone SE, landscape mode) ---- */
+@media (max-height: 700px) {
+  header             { padding: 6px 12px; }
+  header h1          { font-size: 1.35rem; }
+  #board-container   { padding: 4px 0 2px; }
+  .key               { height: 48px; }
+  #keyboard          { gap: 4px; }
+  #definition-panel  { padding: 3px 16px 2px; }
+  #def-text          { -webkit-line-clamp: 1; } /* one line only when tight */
 }
 
-#def-word {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--correct);
+/* ---- Very short screens (≤ 600px tall: landscape small phones) ---- */
+@media (max-height: 600px) {
+  header             { padding: 4px 12px; }
+  header h1          { font-size: 1.15rem; }
+  .key               { height: 40px; font-size: 0.75rem; }
+  .key.wide          { font-size: 0.65rem; }
+  #keyboard          { gap: 3px; }
+  /* hide definition panel — no vertical space available */
+  #definition-panel  { display: none !important; }
 }
 
-#def-pos {
-  font-size: 0.75rem;
-  font-style: italic;
-  color: var(--text-muted);
-  margin-left: 6px;
+/* ===================================================
+   Background Scene — Night & Day
+   =================================================== */
+
+/* ---- Base layer ---- */
+#bg-scene {
+  position: absolute;   /* lives inside body (position: relative) */
+  inset: 0;
+  z-index: 0;           /* below all z-index: 1 game elements */
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--bg);
+  transition: background var(--transition);
 }
 
-#def-text {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-  margin: 0;
+/* Night layer (visible in dark mode, hidden in light) */
+.bg-night {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+body.light .bg-night { opacity: 0; }
+
+/* Day layer (hidden in dark mode, visible in light) */
+.bg-day {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+body.light .bg-day { opacity: 1; }
+
+/* ---- Night: Star field (elements created by JS) ---- */
+#star-field {
+  position: absolute;
+  inset: 0;
 }
 
-/* ---- Responsive tweaks ---- */
-@media (max-width: 360px) {
-  .key { min-width: 36px; max-width: 36px; height: 52px; }
-  .key.wide { min-width: 54px; max-width: 54px; }
-  #board { width: 90vw; height: 57vw; }
+.star {
+  position: absolute;
+  border-radius: 50%;
+  animation: twinkle var(--dur, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 1;    transform: scale(1);   }
+  50%       { opacity: 0.1; transform: scale(0.45); }
+}
+
+/* ---- Day: Sky gradient ---- */
+.sky-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    #87ceeb 0%,
+    #b0e0ff 35%,
+    #d4f1ff 60%,
+    #e8faf0 100%
+  );
+}
+
+/* ---- Day: Sun ---- */
+.sun-wrap {
+  position: absolute;
+  top: 5%;
+  right: 6%;
+}
+
+.sun {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%, #fffde7, #ffd600);
+  box-shadow:
+    0 0 0  8px rgba(255, 215,  10, 0.18),
+    0 0 0 18px rgba(255, 215,  10, 0.11),
+    0 0 0 30px rgba(255, 215,  10, 0.06),
+    0 0 42px 14px rgba(255, 180, 0, 0.45);
+  animation: sunPulse 5s ease-in-out infinite;
+}
+
+/* Spinning ray halo via conic-gradient */
+.sun::before {
+  content: '';
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  background: conic-gradient(
+    rgba(255,220,0,0.55)  0deg  18deg, transparent  18deg  40deg,
+    rgba(255,220,0,0.55) 40deg  58deg, transparent  58deg  80deg,
+    rgba(255,220,0,0.55) 80deg  98deg, transparent  98deg 120deg,
+    rgba(255,220,0,0.55)120deg 138deg, transparent 138deg 160deg,
+    rgba(255,220,0,0.55)160deg 178deg, transparent 178deg 200deg,
+    rgba(255,220,0,0.55)200deg 218deg, transparent 218deg 240deg,
+    rgba(255,220,0,0.55)240deg 258deg, transparent 258deg 280deg,
+    rgba(255,220,0,0.55)280deg 298deg, transparent 298deg 320deg,
+    rgba(255,220,0,0.55)320deg 338deg, transparent 338deg 360deg
+  );
+  /* hide the center so only the outer ring rays show */
+  -webkit-mask: radial-gradient(circle 27px at center, transparent 100%, #000 100%);
+          mask: radial-gradient(circle 27px at center, transparent 100%, #000 100%);
+  animation: sunSpin 12s linear infinite;
+}
+
+@keyframes sunPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0  8px rgba(255,215,10,0.18),
+      0 0 0 18px rgba(255,215,10,0.11),
+      0 0 42px 14px rgba(255,180,0,0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 0 12px rgba(255,215,10,0.24),
+      0 0 0 25px rgba(255,215,10,0.14),
+      0 0 60px 22px rgba(255,180,0,0.55);
+  }
+}
+
+@keyframes sunSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ---- Day: Clouds ---- */
+.cloud {
+  position: absolute;
+  background: #ffffff;
+  border-radius: 50px;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.07);
+  animation: cloudDrift linear infinite;
+}
+.cloud::before, .cloud::after {
+  content: '';
+  position: absolute;
+  background: #ffffff;
+  border-radius: 50%;
+}
+
+.c1 {
+  width: 140px; height: 44px;
+  top: 11%; left: -150px;
+  animation-duration: 36s; animation-delay: 0s;
+}
+.c1::before { width: 68px; height: 68px; top: -30px; left: 14px; }
+.c1::after  { width: 84px; height: 56px; top: -24px; left: 48px; }
+
+.c2 {
+  width: 108px; height: 36px;
+  top: 20%; left: -120px;
+  animation-duration: 54s; animation-delay: -18s;
+  opacity: 0.84;
+}
+.c2::before { width: 56px; height: 56px; top: -24px; left: 10px; }
+.c2::after  { width: 68px; height: 44px; top: -18px; left: 36px; }
+
+.c3 {
+  width: 168px; height: 50px;
+  top: 5%; left: -180px;
+  animation-duration: 48s; animation-delay: -28s;
+  opacity: 0.92;
+}
+.c3::before { width: 74px; height: 74px; top: -32px; left: 22px; }
+.c3::after  { width: 96px; height: 60px; top: -26px; left: 60px; }
+
+@keyframes cloudDrift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(100vw + 220px)); }
+}
+
+/* ---- Day: Far mountains (grey-blue, tallest) ---- */
+.mtn-far {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 46%;
+  background: linear-gradient(to bottom, #8fa8be, #6e8fa5);
+  clip-path: polygon(
+     0% 100%,  0%  62%,
+     8%  34%, 16%  60%,
+    24%  18%, 33%  56%,
+    42%   6%, 51%  56%,
+    59%  28%, 67%  57%,
+    75%  12%, 83%  52%,
+    91%  26%, 96%  55%,
+   100%  20%,100% 100%
+  );
+}
+
+/* ---- Day: Mid mountains (forest green) ---- */
+.mtn-mid {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 35%;
+  background: linear-gradient(to bottom, #4a7c59, #2e5a3d);
+  clip-path: polygon(
+     0% 100%,  0%  68%,
+    11%  28%, 24%  66%,
+    38%   6%, 53%  63%,
+    65%  26%, 78%  62%,
+    89%  16%, 96%  54%,
+   100%  38%,100% 100%
+  );
+}
+
+/* ---- Day: Tree silhouette ---- */
+.trees-line {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 21%;
+  background: #1a3d2b;
+  clip-path: polygon(
+     0% 100%,  0%  62%,
+     2%  80%,  4%  48%,  6%  74%,  8%  36%, 10%  62%,
+    12%  45%, 14%  68%, 16%  28%, 18%  56%, 20%  72%,
+    22%  46%, 24%  64%, 26%  40%, 28%  66%, 30%  54%,
+    32%  72%, 34%  46%, 36%  63%, 38%  32%, 41%  58%,
+    44%  75%, 47%  50%, 50%  70%, 53%  40%, 56%  63%,
+    59%  78%, 62%  48%, 65%  68%, 68%  36%, 71%  60%,
+    74%  76%, 77%  46%, 80%  66%, 83%  40%, 86%  63%,
+    89%  78%, 92%  50%, 95%  66%, 98%  57%,100%  62%,
+   100% 100%
+  );
+}
+
+/* ---- Day: River ---- */
+.river {
+  position: absolute;
+  bottom: 14%;
+  left: 6%;
+  width: 26%;
+  height: 5%;
+  background: linear-gradient(90deg, #5eb3f5, #90d4ff, #5eb3f5);
+  border-radius: 60px;
+  opacity: 0.72;
+  transform: rotate(-4deg);
+  animation: riverShimmer 4s ease-in-out infinite;
+  box-shadow: 0 3px 10px rgba(66,165,245,0.35);
+}
+/* Highlight sparkle on river */
+.river::after {
+  content: '';
+  position: absolute;
+  top: 18%;
+  left: 12%;
+  width: 65%;
+  height: 28%;
+  background: rgba(255,255,255,0.45);
+  border-radius: 50%;
+  animation: riverShimmer 2.8s ease-in-out infinite reverse;
+}
+
+@keyframes riverShimmer {
+  0%, 100% { opacity: 0.65; }
+  50%       { opacity: 0.88; }
+}
+
+/* ---- Day: Rain (elements created by JS) ---- */
+#rain-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.rain-drop {
+  position: absolute;
+  width: 1.5px;
+  background: linear-gradient(to bottom, transparent, rgba(80,180,255,0.75));
+  border-radius: 0 0 2px 2px;
+  top: -60px;
+  animation: rainFall linear infinite;
+}
+
+@keyframes rainFall {
+  from { transform: translateY(0)   rotate(14deg); }
+  to   { transform: translateY(115vh) rotate(14deg); }
 }
