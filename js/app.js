@@ -25,7 +25,7 @@
   }
 
   function getWordOfDay () {
-    const idx = ((getGameIndex() % cleanAnswers.length) + cleanAnswers.length) % cleanAnswers.length;
+    const idx = Math.floor(Math.random() * cleanAnswers.length);
     return cleanAnswers[idx].toLowerCase();
   }
 
