@@ -550,8 +550,9 @@
         });
     });
 
-    // New Game button
+    // New Game buttons
     document.getElementById('new-game-btn').addEventListener('click', startNewGame);
+    document.getElementById('new-game-side-btn').addEventListener('click', startNewGame);
   }
 
   /* ---- Background scene: stars & rain ---- */
