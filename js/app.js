@@ -77,7 +77,9 @@
         btn.textContent = k;
         btn.dataset.key = k;
         if (k === 'Enter' || k === '⌫') btn.classList.add('wide');
-        btn.addEventListener('click', () => handleKey(k));
+        btn.setAttribute('tabindex', '-1');            // keep out of tab order
+        btn.addEventListener('mousedown', e => e.preventDefault()); // prevent focus steal on click
+        btn.addEventListener('click', () => { handleKey(k); btn.blur(); }); // release any focus on mobile
         row.appendChild(btn);
       });
       keyboard.appendChild(row);
