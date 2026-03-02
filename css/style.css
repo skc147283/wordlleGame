@@ -341,32 +341,40 @@ body.light #definition-panel {
   transform: translateY(-50%) scale(0.98);
 }
 
-/* Mobile: move to bottom-right corner */
+/* Mobile: move to header right side */
 @media (max-width: 600px) {
   #new-game-side-btn {
+    position: absolute;
     right: 12px;
-    top: auto;
-    bottom: 100px;
-    transform: none;
-    padding: 10px 14px;
-    gap: 4px;
+    top: 50%;
+    left: auto;
+    bottom: auto;
+    transform: translateY(-50%);
+    padding: 8px 12px;
+    gap: 3px;
+    font-size: 0.65rem;
+    z-index: 101;
   }
   
   #new-game-side-btn svg {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
   }
   
   #new-game-side-btn span {
     font-size: 0.65rem;
   }
   
+  header {
+    position: relative;
+  }
+  
   #new-game-side-btn:hover {
-    transform: scale(1.05);
+    transform: translateY(-50%) scale(1.05);
   }
   
   #new-game-side-btn:active {
-    transform: scale(0.98);
+    transform: translateY(-50%) scale(0.98);
   }
 }
 

@@ -41,6 +41,7 @@
   const board     = document.getElementById('board');
   const keyboard  = document.getElementById('keyboard');
   const toastWrap = document.getElementById('toast-container');
+  let helpShown   = false;
 
   /* ---- Build Board ---- */
   function buildBoard () {
@@ -162,13 +163,14 @@
   /* ---- Submit guess ---- */
   function submitGuess () {
     if (currentInput.length < WORD_LEN) {
-      showToast('Not enough letters');
+      const remaining = WORD_LEN - currentInput.length;
+      showToast(`Need ${remaining} more letter${remaining > 1 ? 's' : ''}`);
       shakeRow(currentRow);
       return;
     }
 
     if (!VALID_GUESSES.has(currentInput)) {
-      showToast('Not in word list');
+      showToast('Not a valid word - try another');
       shakeRow(currentRow);
       return;
     }
@@ -220,12 +222,24 @@
         saveStats(false, 0);
         saveState();
         showDefinitionForWord(answer);
-        showToast(answer.toUpperCase(), 3500);
+        showToast(`Game Over! The word was: ${answer.toUpperCase()}`, 3500);
         setTimeout(() => openStatsModal(), 3600);
       } else {
         currentRow++;
         currentInput = '';
         saveState();
+        
+        // Show helpful hint after first guess
+        if (rowIdx === 0) {
+          const correctCount = states.filter(s => s === 'correct').length;
+          const presentCount = states.filter(s => s === 'present').length;
+          
+          if (correctCount + presentCount === 0) {
+            setTimeout(() => showToast('💡 Try words with common vowels like A, E, I', 2000), 500);
+          } else if (correctCount > 0) {
+            setTimeout(() => showToast('✓ Great! Keep building on those correct letters', 2000), 500);
+          }
+        }
       }
     }, totalDelay);
   }
@@ -629,7 +643,20 @@
     if (gameOver) {
       showDefinitionForWord(answer);
       setTimeout(() => openStatsModal(), 800);
+    } else if (currentRow === 0 && currentInput === '') {
+      // Show help hint on first game load
+      setTimeout(() => showHelpHint(), 600);
     }
+  }
+
+  function showHelpHint () {
+    const hints = [
+      '💡 Type a 5-letter word to start!',
+      '✍️ Enter any valid 5-letter word',
+      '🎯 Guess the word in 6 tries'
+    ];
+    const hint = hints[Math.floor(Math.random() * hints.length)];
+    showToast(hint, 2500);
   }
 
   document.addEventListener('DOMContentLoaded', init);
