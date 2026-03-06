@@ -437,6 +437,10 @@
 
     // Close the stats modal
     document.getElementById('stats-modal').classList.remove('open');
+
+    // Informational messages for new game start
+    showToast('New Game started', 1500);
+    setTimeout(() => showToast('Guess the Word', 1800), 700);
   }
 
   /* ---- Stats Modal ---- */
